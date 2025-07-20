@@ -376,6 +376,133 @@ document.addEventListener('WebComponentsReady', () => {
     viewer.addEventListener('manipulate-start', e => animToggle.classList.remove('checked'));
     viewer.addEventListener('urdf-processed', e => updateAngles());
     updateLoop();
-    viewer.camera.position.set(3.0, 0.0, 2.0);
+    viewer.camera.position.set(1.0, 0.0, 1.0);
 
+});
+
+
+
+// 音频控制功能
+document.addEventListener('DOMContentLoaded', () => {
+    const playBtn = document.getElementById('play-btn');
+    const recordBtn = document.getElementById('record-btn');
+    const recordingIndicator = document.getElementById('recording-indicator');
+    const audioStatus = document.getElementById('audio-status');
+    
+    // 创建音频上下文
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const audioContext = new AudioContext();
+    
+    // 播放音频功能
+    playBtn.addEventListener('click', () => {
+        // 创建示例音频（实际应用中替换为您的音频文件）
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.value = 440; // A4 音符
+        gainNode.gain.value = 0.3;
+        
+        // 播放音频
+        oscillator.start();
+        
+        // 显示状态
+        showStatus("播放中: 示例音频 (440Hz 正弦波)");
+        
+        // 2秒后停止
+        setTimeout(() => {
+            oscillator.stop();
+            showStatus("播放完成");
+        }, 2000);
+    });
+    
+    // 录制音频功能
+    let mediaRecorder;
+    let audioChunks = [];
+    
+    recordBtn.addEventListener('click', async () => {
+        if (!mediaRecorder) {
+            // 开始录制
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
+                
+                mediaRecorder.onstop = () => {
+                    // 创建音频Blob
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    
+                    // 发送到服务器
+                    sendAudioToServer(audioBlob);
+                    
+                    // 重置
+                    audioChunks = [];
+                    mediaRecorder = null;
+                    
+                    // 停止所有轨道
+                    stream.getTracks().forEach(track => track.stop());
+                };
+                
+                mediaRecorder.start();
+                recordingIndicator.style.display = 'block';
+                recordBtn.querySelector('span').textContent = '停止录制';
+                showStatus("录制中... 点击停止按钮结束录制");
+            } catch (error) {
+                showStatus(`录制错误: ${error.message}`);
+                console.error('录音权限错误:', error);
+            }
+        } else {
+            // 停止录制
+            mediaRecorder.stop();
+            recordingIndicator.style.display = 'none';
+            recordBtn.querySelector('span').textContent = '录制音频';
+            showStatus("处理录制内容...");
+        }
+    });
+    
+    // 显示状态消息
+    function showStatus(message) {
+        audioStatus.textContent = message;
+        audioStatus.style.display = 'block';
+        
+        // 3秒后隐藏状态
+        setTimeout(() => {
+            audioStatus.style.display = 'none';
+        }, 3000);
+    }
+    
+    // 发送音频到服务器
+    function sendAudioToServer(audioBlob) {
+        showStatus("正在上传音频...");
+        
+        // 创建FormData对象
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'recording.wav');
+        
+        // 发送到服务器端点（这里使用模拟请求）
+        setTimeout(() => {
+            // 实际应用中替换为真实的服务器端点
+            fetch('/upload_audio', {
+              method: 'POST',
+              body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+              showStatus(`上传成功: ${data.message}`);
+            })
+            .catch(error => {
+              showStatus(`上传失败: ${error.message}`);
+            });
+            
+            // 模拟成功上传
+            showStatus("音频已成功发送到服务器");
+            console.log("音频已准备发送:", audioBlob);
+        }, 1500);
+    }
 });

@@ -3,9 +3,7 @@
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
         <meta charset="utf-8"/>
-
-        <title>URDF Viewer Example</title>
-
+        <title>URDF Viewer with Audio Controls</title>
         <script src="https://unpkg.com/@webcomponents/webcomponentsjs@2.4.3/webcomponents-bundle.js"></script>
         <link href="https://fonts.googleapis.com/css?family=Roboto:100,300" rel="stylesheet"/>
         <link href="./styles.css" type="text/css" rel="stylesheet" />
@@ -16,9 +14,6 @@
         <div id="menu">
             <ul id="urdf-options">
                 <li urdf="../../../urdf/g1_inspirehands_html_test/G1_inspire_hands.urdf" color="#E91E63">G1_inspire_hands</li>
-                <li urdf="../../../urdf/T12/urdf/T12_flipped.URDF" color="#E91E63">ATHLETE</li>
-                <li urdf="../../../urdf/TriATHLETE/urdf/TriATHLETE_flipped.URDF" color="#009688">TriATHLETE</li>
-                <li urdf="../../../urdf/TriATHLETE_Climbing/urdf/TriATHLETE_flipped.URDF" color="#FFB300">TriATHLETE Climbing</li>
             </ul>
 
             <div id="controls" class="hidden">
@@ -45,7 +40,23 @@
             </div>
         </div>
         <urdf-viewer up="+Z" display-shadow tabindex="0"></urdf-viewer>
+        
+        <!-- 添加音频控制按钮 -->
+        <div id="audio-controls">
+            <button id="play-btn" class="audio-btn">
+                <i>▶</i> 播放音频
+            </button>
+            <button id="record-btn" class="audio-btn">
+                <i>●</i> <span>录制音频</span>
+                <div id="recording-indicator"></div>
+            </button>
+        </div>
+        
+        <div id="audio-status">准备就绪</div>
 
         <script src="./src/index.js"></script>
+        <script>
+            
+        </script>
     </body>
 </html>

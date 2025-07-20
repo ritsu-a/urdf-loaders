@@ -292,3 +292,87 @@ input:focus {
         display: none;
     }
 }
+
+
+/* 添加音频控制区域样式 */
+#audio-controls {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 15px;
+    z-index: 1000;
+    background: rgba(30, 30, 30, 0.7);
+    padding: 15px 25px;
+    border-radius: 50px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.audio-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 30px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: white;
+    min-width: 160px;
+    justify-content: center;
+}
+
+#play-btn {
+    background: linear-gradient(to right, #00c853, #009624);
+}
+
+#record-btn {
+    background: linear-gradient(to right, #ff3d00, #dd2c00);
+}
+
+.audio-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+}
+
+.audio-btn:active {
+    transform: translateY(1px);
+}
+
+.audio-btn i {
+    font-size: 20px;
+}
+
+#recording-indicator {
+    display: none;
+    width: 12px;
+    height: 12px;
+    background-color: #ff3d00;
+    border-radius: 50%;
+    margin-left: 8px;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.3; }
+    100% { opacity: 1; }
+}
+
+#audio-status {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 30px;
+    font-size: 14px;
+    display: none;
+    z-index: 999;
+}
