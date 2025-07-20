@@ -28,6 +28,17 @@ const DEG2RAD = Math.PI / 180;
 const RAD2DEG = 1 / DEG2RAD;
 let sliders = {};
 
+// Animation variables
+let animationFrames = [];   // 存储所有帧数据
+let currentFrame = 0;       // 当前帧索引
+let isPlaying = false;      // 播放状态
+let playInterval;           // 播放计时器
+let frameRate = 20;         // 默认帧率(帧/秒)
+
+
+let controlMode = 'manual'; // 'manual' 或 'animation'
+let animationRequestId = null;
+
 // Global Functions
 const setColor = color => {
 
@@ -217,16 +228,16 @@ viewer.addEventListener('urdf-processed', () => {
 
             }
 
-            slider.addEventListener('input', () => {
-                viewer.setJointValue(joint.name, slider.value);
-                li.update();
-            });
+            // slider.addEventListener('input', () => {
+            //     viewer.setJointValue(joint.name, slider.value);
+            //     li.update();
+            // });
 
-            input.addEventListener('change', () => {
-                const degMultiplier = radiansToggle.classList.contains('checked') ? 1.0 : DEG2RAD;
-                viewer.setJointValue(joint.name, input.value * degMultiplier);
-                li.update();
-            });
+            // input.addEventListener('change', () => {
+            //     const degMultiplier = radiansToggle.classList.contains('checked') ? 1.0 : DEG2RAD;
+            //     viewer.setJointValue(joint.name, input.value * degMultiplier);
+            //     li.update();
+            // });
 
             li.update();
 
@@ -337,9 +348,9 @@ const updateAngles = () => {
 
 const updateLoop = () => {
 
-    if (animToggle.classList.contains('checked')) {
-        updateAngles();
-    }
+    // if (animToggle.classList.contains('checked')) {
+    //     updateAngles();
+    // }
 
     requestAnimationFrame(updateLoop);
 
@@ -374,7 +385,7 @@ document.addEventListener('WebComponentsReady', () => {
 
     // stop the animation if user tried to manipulate the model
     viewer.addEventListener('manipulate-start', e => animToggle.classList.remove('checked'));
-    viewer.addEventListener('urdf-processed', e => updateAngles());
+    // viewer.addEventListener('urdf-processed', e => updateAngles());
     updateLoop();
     viewer.camera.position.set(1.0, 0.0, 1.0);
 
@@ -392,26 +403,151 @@ document.addEventListener('DOMContentLoaded', () => {
     // 创建音频上下文
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     const audioContext = new AudioContext();
-    
+
     // 播放音频功能
-    playBtn.addEventListener('click', () => {
+    playBtn.addEventListener('click', async () => {
         // 播放 audio/output.wav 文件
-        const audio = new Audio('../../../audio/output.wav');
+        const audio = new Audio('../../../data/output.wav');
+        
+        try {
+            const response = await fetch('http://127.0.0.1:9080/data/output.csv');
+        
+            if (!response.ok) {
+                throw new Error(`文件加载失败: ${response.status} ${response.statusText}`);
+            }
+            
+            const csvText = await response.text();
+            parseCSVData(csvText);
+            showStatus("CSV动画加载成功");
+        } catch (error) {
+            showStatus(`加载失败: ${error.message}`, "error");
+            console.error('CSV解析错误:', error);
+        }
+
         
         // 显示状态
         showStatus("播放中: output.wav", "info");
         
+
+        if (!isPlaying) {
+            playAnimation();
         // 播放音频
-        audio.play().catch(error => {
-            showStatus(`播放错误: ${error.message}`, "error");
-            console.error('播放错误:', error);
-        });
+            audio.play().catch(error => {
+                showStatus(`播放错误: ${error.message}`, "error");
+                console.error('播放错误:', error);
+            });
+        }
         
         // 监听播放结束
         audio.onended = () => {
             showStatus("播放完成", "success");
         };
     });
+
+    // 文件读取辅助函数
+    function readFileAsText(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => reject(new Error('文件读取失败'));
+          reader.readAsText(file);
+        });
+      }
+      
+    // CSV数据解析
+    function parseCSVData(csvText) {
+        animationFrames = [];
+        
+        // 分割CSV行
+        const lines = csvText.trim().split('\n');
+        
+        // 获取关节名称
+        const jointNames = ['1', '2', '3', '4', '5', '6', '7', 'left_hip_pitch_joint', 'left_hip_roll_joint', 'left_hip_yaw_joint', 
+                        'left_knee_joint', 'left_ankle_pitch_joint', 'left_ankle_roll_joint', 
+                        'right_hip_pitch_joint', 'right_hip_roll_joint', 'right_hip_yaw_joint', 
+                        'right_knee_joint', 'right_ankle_pitch_joint', 'right_ankle_roll_joint', 
+                        'waist_yaw_joint', 'waist_roll_joint', 'waist_pitch_joint', 'left_shoulder_pitch_joint', 
+                        'left_shoulder_roll_joint', 'left_shoulder_yaw_joint', 'left_elbow_joint', 
+                        'left_wrist_roll_joint', 'left_wrist_pitch_joint', 'left_wrist_yaw_joint', 
+                        'L_thumb_proximal_yaw_joint', 'L_thumb_proximal_pitch_joint', 'L_thumb_intermediate_joint', 'L_thumb_distal_joint', 
+                        'L_index_proximal_joint', 'L_index_intermediate_joint', 
+                        'L_middle_proximal_joint', 'L_middle_intermediate_joint', 
+                        'L_ring_proximal_joint', 'L_ring_intermediate_joint', 
+                        'L_pinky_proximal_joint', 'L_pinky_intermediate_joint', 
+                        'right_shoulder_pitch_joint', 'right_shoulder_roll_joint', 
+                        'right_shoulder_yaw_joint', 'right_elbow_joint', 
+                        'right_wrist_roll_joint', 'right_wrist_pitch_joint', 'right_wrist_yaw_joint', 
+                        'R_thumb_proximal_yaw_joint', 'R_thumb_proximal_pitch_joint', 'R_thumb_intermediate_joint', 'R_thumb_distal_joint', 
+                        'R_index_proximal_joint', 'R_index_intermediate_joint', 'R_middle_proximal_joint', 'R_middle_intermediate_joint', 
+                        'R_ring_proximal_joint', 'R_ring_intermediate_joint', 'R_pinky_proximal_joint', 'R_pinky_intermediate_joint'];
+        // 0-7 global 
+        // 8-18 lower body
+        // 19-28 left arm
+        // 29-40 left hand
+        // 41-47 right arm
+        // 48-59 right hand
+        // 处理数据行
+        for (let i = 0; i < lines.length; i++) {
+            const values = lines[i].split(',');
+            const frameData = {};
+            
+            for (let j = 19; j < 29; j++) {
+                const jointName = jointNames[j];
+                const angleValue = parseFloat(values[j]);
+                
+                if (!isNaN(angleValue)) {
+                    frameData[jointName] = angleValue;
+                }
+            }
+            for (let j = 41; j < 48; j++) {
+                const jointName = jointNames[j];
+                const angleValue = parseFloat(values[j-12]);
+                
+                if (!isNaN(angleValue)) {
+                    frameData[jointName] = angleValue;
+                }
+            }
+            
+            animationFrames.push(frameData);
+        }
+        
+        // 更新
+        currentFrame = 0;
+        console.log(`加载了${animationFrames.length}帧动画数据`);
+    }
+
+    // 播放控制函数
+    function playAnimation() {
+        if (animationFrames.length === 0) return;
+        
+        isPlaying = true;
+        const frameDelay = 1000 / frameRate; // 毫秒/帧
+        
+        playInterval = setInterval(() => {
+          currentFrame = (currentFrame + 1) % animationFrames.length;
+          updateRobotPose();
+          
+          if (currentFrame === 0) {
+            // 循环播放结束
+            stopAnimation();
+          }
+        }, frameDelay);
+    }
+
+    function stopAnimation() {
+        isPlaying = false;
+        clearInterval(playInterval);
+    }
+
+    function updateRobotPose() {
+        if (!viewer.setJointValues || currentFrame >= animationFrames.length) return;
+        
+        const frameData = animationFrames[currentFrame];
+        viewer.setJointValues(frameData);
+    }
+
+
+
     
     // 录制音频功能
     let mediaRecorder;

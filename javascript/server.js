@@ -13,7 +13,7 @@ const app = express();
 const PORT = 3000;
 
 // 创建音频目录
-const audioDir = path.join(__dirname, 'audio');
+const audioDir = path.join(__dirname, 'data');
 if (!fs.existsSync(audioDir)) {
     fs.mkdirSync(audioDir, { recursive: true });
 }
@@ -52,7 +52,7 @@ app.post('/upload_audio', (req, res) => {
             message: '音频保存成功',
             filename: filename,
             path: filePath,
-            url: `/audio/${filename}`  // 添加访问URL
+            url: `/data/${filename}`  // 添加访问URL
         });
     });
 });
@@ -88,5 +88,5 @@ app.use('/audio', express.static(audioDir));
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`服务器运行在 http://0.0.0.0:${PORT}`);
     console.log(`音频文件保存在: ${audioDir}`);
-    console.log(`访问已保存的音频: http://localhost:${PORT}/audio/[文件名]`);
+    console.log(`访问已保存的音频: http://localhost:${PORT}/data/[文件名]`);
 });

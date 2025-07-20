@@ -63,6 +63,7 @@
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "express-fileupload": "^1.5.2",
+    "file-type": "^21.0.0",
     "fileupload": "^1.0.0"
   }
 }

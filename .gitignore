@@ -2,7 +2,8 @@
 logs
 *.log
 npm-debug.log*
-javascript/audio
+javascript/data
+javascript/downloads
 
 # Runtime data
 pids
