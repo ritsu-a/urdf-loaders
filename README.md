@@ -1,3 +1,15 @@
+### modifyed from urdf-loaders 
+front-end for visualizing
+
+usage:
+
+in two terminals:
+    node server.js
+    npm start
+
+
+
+
 # urdf-loaders
 
 URDF loading code in both [C# for Unity](./unity/Assets/URDFLoader/) and [Javascript for THREE.js](./javascript/), as well as example [JPL ATHLETE](https://en.wikipedia.org/wiki/ATHLETE) URDF files

@@ -395,28 +395,22 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 播放音频功能
     playBtn.addEventListener('click', () => {
-        // 创建示例音频（实际应用中替换为您的音频文件）
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.type = 'sine';
-        oscillator.frequency.value = 440; // A4 音符
-        gainNode.gain.value = 0.3;
-        
-        // 播放音频
-        oscillator.start();
+        // 播放 audio/output.wav 文件
+        const audio = new Audio('../../../audio/output.wav');
         
         // 显示状态
-        showStatus("播放中: 示例音频 (440Hz 正弦波)");
+        showStatus("播放中: output.wav", "info");
         
-        // 2秒后停止
-        setTimeout(() => {
-            oscillator.stop();
-            showStatus("播放完成");
-        }, 2000);
+        // 播放音频
+        audio.play().catch(error => {
+            showStatus(`播放错误: ${error.message}`, "error");
+            console.error('播放错误:', error);
+        });
+        
+        // 监听播放结束
+        audio.onended = () => {
+            showStatus("播放完成", "success");
+        };
     });
     
     // 录制音频功能
@@ -479,30 +473,34 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 发送音频到服务器
     function sendAudioToServer(audioBlob) {
-        showStatus("正在上传音频...");
+        showStatus("正在上传音频到服务器...", "info");
         
         // 创建FormData对象
         const formData = new FormData();
-        formData.append('audio', audioBlob, 'recording.wav');
+        formData.append('audio', audioBlob, 'input.wav');
+        formData.append('filename', 'input.wav'); // 指定保存的文件名
         
-        // 发送到服务器端点（这里使用模拟请求）
-        setTimeout(() => {
-            // 实际应用中替换为真实的服务器端点
-            fetch('/upload_audio', {
-              method: 'POST',
-              body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-              showStatus(`上传成功: ${data.message}`);
-            })
-            .catch(error => {
-              showStatus(`上传失败: ${error.message}`);
-            });
-            
-            // 模拟成功上传
-            showStatus("音频已成功发送到服务器");
-            console.log("音频已准备发送:", audioBlob);
-        }, 1500);
+        // 使用服务器端点保存音频
+        fetch('http://localhost:3000/upload_audio', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`服务器错误: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                showStatus(`音频已保存为: ${data.filename}`, "success");
+            } else {
+                showStatus(`保存失败: ${data.error}`, "error");
+            }
+        })
+        .catch(error => {
+            showStatus(`上传失败: ${error.message}`, "error");
+            console.error('上传错误:', error);
+        });
     }
 });
