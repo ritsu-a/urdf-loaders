@@ -3,11 +3,20 @@ front-end for visualizing
 
 usage:
 
-in two terminals:
+in remote llm server:
+    python HRI_mllm/inference/text_response_server.py
+
+in 4 terminals:
+
+    ssh -L 6000:localhost:5000 root@36.103.180.174
+    node proxyServer.js
     node server.js
+
     npm start
 
 
+
+curl -X POST http://127.0.0.1:6000/generate-files -d '{"text":"What do you usually do on weekends1?"}' -H "Content-Type: application/json"
 
 
 # urdf-loaders

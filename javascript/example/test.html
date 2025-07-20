@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URDF模型查看器与音频生成器</title>
+    <script src="https://unpkg.com/@webcomponents/webcomponentsjs@2.4.3/webcomponents-bundle.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300" rel="stylesheet"/>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #2c3e50);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .header {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            z-index: 10;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #4facfe, #00f2fe);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .subtitle {
+            color: #ddd;
+            font-size: 1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .left-panel {
+            width: 320px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 20px;
+            overflow-y: auto;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .control-section {
+            margin-bottom: 25px;
+        }
+        
+        .section-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: #4facfe;
+            padding-bottom: 5px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        textarea {
+            width: 100%;
+            height: 120px;
+            padding: 15px;
+            border-radius: 8px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+            resize: vertical;
+            margin-bottom: 15px;
+        }
+        
+        textarea::placeholder {
+            color: #aaa;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        
+        button {
+            flex: 1;
+            min-width: 120px;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(to right, #00c9ff, #92fe9d);
+            color: #333;
+            font-weight: bold;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        #generate-btn {
+            background: linear-gradient(to right, #4facfe, #00f2fe);
+            color: white;
+        }
+        
+        #play-btn {
+            background: linear-gradient(to right, #00c9ff, #00f2fe);
+            color: white;
+        }
+        
+        .status {
+            padding: 12px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin: 15px 0;
+            overflow: hidden;
+            display: none;
+        }
+        
+        .progress {
+            height: 100%;
+            width: 0;
+            background: linear-gradient(to right, #00c9ff, #92fe9d);
+            transition: width 0.3s;
+        }
+        
+        .results {
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .file-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .file-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        .file-title {
+            font-size: 1rem;
+            margin-bottom: 10px;
+            color: #4facfe;
+        }
+        
+        .file-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .action-btn {
+            flex: 1;
+            padding: 8px 10px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            text-align: center;
+            font-size: 0.85rem;
+            transition: background 0.3s;
+        }
+        
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .urdf-container {
+            flex: 1;
+            position: relative;
+        }
+        
+        urdf-viewer {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        #model-controls {
+            margin-top: 20px;
+        }
+        
+        .toggle {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-size: 0.9rem;
+        }
+        
+        .toggle:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .toggle.checked {
+            background: rgba(74, 144, 226, 0.3);
+        }
+        
+        #urdf-options {
+            list-style: none;
+            margin-bottom: 15px;
+        }
+        
+        #urdf-options li {
+            padding: 10px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-size: 0.9rem;
+        }
+        
+        #urdf-options li:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        #urdf-options li.selected {
+            background: rgba(74, 144, 226, 0.3);
+            border-left: 3px solid #4facfe;
+        }
+        
+        #model-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            font-size: 0.85rem;
+        }
+        
+        .recording-indicator {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .recording-dot {
+            width: 12px;
+            height: 12px;
+            background-color: red;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+        
+        @media (max-width: 900px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .left-panel {
+                width: 100%;
+                height: auto;
+                max-height: 50vh;
+                border-right: none;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            
+            .urdf-container {
+                height: 50vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>URDF模型查看器与音频生成器</h1>
+        <p class="subtitle">输入文本生成音频与动画数据，同时查看URDF机器人模型</p>
+    </div>
+    
+    <div class="container">
+        <div class="left-panel">
+            <div class="control-section">
+                <div class="section-title">文本输入与音频生成</div>
+                <textarea id="text-input" placeholder="请输入要转换为音频的文本，例如：What do you usually do on weekends?">What do you usually do on weekends?</textarea>
+                
+                <div class="controls">
+                    <button id="generate-btn">生成文件</button>
+                    <button id="play-btn">播放结果</button>
+                    <button id="record-btn">录制音频</button>
+                </div>
+                
+                <div class="recording-indicator" id="recording-indicator">
+                    <div class="recording-dot"></div>
+                    <span>正在录制音频...</span>
+                </div>
+                
+                <div class="progress-bar" id="progress-bar">
+                    <div class="progress" id="progress"></div>
+                </div>
+                
+                <div class="status" id="status">
+                    就绪 - 输入文本并点击"生成文件"
+                </div>
+                
+                <div class="results" id="results">
+                    <div class="section-title">生成结果</div>
+                    <div class="file-cards">
+                        <div class="file-card">
+                            <div class="file-title">音频文件 (.wav)</div>
+                            <div class="file-actions">
+                                <a href="#" id="play-audio" class="action-btn">播放</a>
+                                <a href="#" id="download-audio" class="action-btn">下载</a>
+                            </div>
+                        </div>
+                        
+                        <div class="file-card">
+                            <div class="file-title">动画数据 (.csv)</div>
+                            <div class="file-actions">
+                                <a href="#" id="preview-csv" class="action-btn">预览</a>
+                                <a href="#" id="download-csv" class="action-btn">下载</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="control-section" id="model-controls">
+                <div class="section-title">模型控制</div>
+                
+                <ul id="urdf-options">
+                    <li urdf="../../../urdf/g1_inspirehands_html_test/G1_inspire_hands.urdf" class="selected">G1_inspire_hands</li>
+                </ul>
+                
+                <div class="toggle checked" id="autocenter-toggle">Auto Centering</div>
+                <div class="toggle" id="collision-toggle">Show Collision</div>
+                <div class="toggle checked" id="do-animate">Animate Joints</div>
+                <div class="toggle" id="hide-fixed">Hide Fixed Joints</div>
+                
+                <div id="model-info">
+                    <p><strong>当前模型:</strong> G1_inspire_hands</p>
+                    <p><strong>关节数:</strong> 24</p>
+                    <p><strong>自由度:</strong> 20</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="urdf-container">
+            <urdf-viewer up="+Z" display-shadow tabindex="0"></urdf-viewer>
+        </div>
+    </div>
+
+    <script src="./src/test.js"></script>
+
+
+    
+</body>
+</html>
