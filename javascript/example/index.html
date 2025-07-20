@@ -15,6 +15,7 @@
 
         <div id="menu">
             <ul id="urdf-options">
+                <li urdf="../../../urdf/g1_inspirehands_html_test/G1_inspire_hands.urdf" color="#E91E63">G1_inspire_hands</li>
                 <li urdf="../../../urdf/T12/urdf/T12_flipped.URDF" color="#E91E63">ATHLETE</li>
                 <li urdf="../../../urdf/TriATHLETE/urdf/TriATHLETE_flipped.URDF" color="#009688">TriATHLETE</li>
                 <li urdf="../../../urdf/TriATHLETE_Climbing/urdf/TriATHLETE_flipped.URDF" color="#FFB300">TriATHLETE Climbing</li>
@@ -36,14 +37,14 @@
                         <option value="-X">-X</option>
                         <option value="+Y">+Y</option>
                         <option value="-Y">-Y</option>
-                        <option value="+Z">+Z</option>
-                        <option value="-Z" selected>-Z</option>
+                        <option value="+Z" selected>+Z</option>
+                        <option value="-Z">-Z</option>
                     </select>
                 </label>
                 <ul></ul>
             </div>
         </div>
-        <urdf-viewer up="-Z" display-shadow tabindex="0"></urdf-viewer>
+        <urdf-viewer up="+Z" display-shadow tabindex="0"></urdf-viewer>
 
         <script src="./src/index.js"></script>
     </body>

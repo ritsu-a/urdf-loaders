@@ -137,21 +137,21 @@ viewer.addEventListener('urdf-processed', () => {
     const r = viewer.robot;
     Object
         .keys(r.joints)
-        .sort((a, b) => {
+        // .sort((a, b) => {
 
-            const da = a.split(/[^\d]+/g).filter(v => !!v).pop();
-            const db = b.split(/[^\d]+/g).filter(v => !!v).pop();
+        //     const da = a.split(/[^\d]+/g).filter(v => !!v).pop();
+        //     const db = b.split(/[^\d]+/g).filter(v => !!v).pop();
 
-            if (da !== undefined && db !== undefined) {
-                const delta = parseFloat(da) - parseFloat(db);
-                if (delta !== 0) return delta;
-            }
+        //     if (da !== undefined && db !== undefined) {
+        //         const delta = parseFloat(da) - parseFloat(db);
+        //         if (delta !== 0) return delta;
+        //     }
 
-            if (a > b) return 1;
-            if (b > a) return -1;
-            return 0;
+        //     if (a > b) return 1;
+        //     if (b > a) return -1;
+        //     return 0;
 
-        })
+        // })
         .map(key => r.joints[key])
         .forEach(joint => {
 
@@ -236,6 +236,9 @@ viewer.addEventListener('urdf-processed', () => {
 
 });
 
+
+
+
 document.addEventListener('WebComponentsReady', () => {
 
     viewer.loadMeshFunc = (path, manager, done) => {
@@ -297,6 +300,9 @@ document.addEventListener('WebComponentsReady', () => {
         updateList();
     });
 
+    viewer.up = '+Z';
+    upSelect.value = '+Z';
+
 });
 
 // init 2D UI and animation
@@ -348,7 +354,7 @@ const updateList = () => {
             const urdf = e.target.getAttribute('urdf');
             const color = e.target.getAttribute('color');
 
-            viewer.up = '-Z';
+            viewer.up = '+Z';
             document.getElementById('up-select').value = viewer.up;
             viewer.urdf = urdf;
             animToggle.classList.add('checked');
@@ -370,6 +376,6 @@ document.addEventListener('WebComponentsReady', () => {
     viewer.addEventListener('manipulate-start', e => animToggle.classList.remove('checked'));
     viewer.addEventListener('urdf-processed', e => updateAngles());
     updateLoop();
-    viewer.camera.position.set(-5.5, 3.5, 5.5);
+    viewer.camera.position.set(3.0, 0.0, 2.0);
 
 });
