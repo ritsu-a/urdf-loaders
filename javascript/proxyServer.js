@@ -10,6 +10,7 @@ import { fileURLToPath } from 'url';
 
 // 环境配置
 dotenv.config();
+const LOCAL_IP = '192.168.51.4'
 const SERVER_IP = process.env.SERVER_IP || 'localhost';
 const SERVER_PORT = process.env.SERVER_PORT || 6000;
 
@@ -28,6 +29,16 @@ const downloadsDir = path.join(__dirname, 'downloads');
 if (!fs.existsSync(downloadsDir)) {
     fs.mkdirSync(downloadsDir);
 }
+const dataDir = path.join(__dirname, 'data');
+if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir);
+}
+
+// 存储上一次生成的文件URL
+let lastGeneratedFiles = {
+    audioUrl: `http://localhost:${port}/data/output.wav`,
+    csvUrl: `http://localhost:${port}/data/output.csv`
+};
 
 // 处理文件生成请求
 app.post('/generate-files', async (req, res) => {
@@ -73,11 +84,18 @@ app.post('/generate-files', async (req, res) => {
             throw new Error('Missing files in the zip');
         }
 
-        // 返回两个文件的下载路径
+        // 更新上一次生成的文件URL
+        lastGeneratedFiles = {
+            audioUrl: `http://${LOCAL_IP}:${port}/downloads/generated_${timestamp}/${audioFile}`,
+            csvUrl: `http://${LOCAL_IP}:${port}/downloads/generated_${timestamp}/${csvFile}`
+        };
+
+        console.log('Files generated successfully:', lastGeneratedFiles);
+
+        // 返回本次生成的文件URL
         res.json({
             message: 'Files generated successfully',
-            audioUrl: `http://localhost:${port}/downloads/generated_${timestamp}/${audioFile}`,
-            csvUrl: `http://localhost:${port}/downloads/generated_${timestamp}/${csvFile}`
+            ...lastGeneratedFiles
         });
 
     } catch (error) {
@@ -89,6 +107,20 @@ app.post('/generate-files', async (req, res) => {
     }
 });
 
+// 新增：获取上一次生成的文件URL
+app.get('/last-generated', (req, res) => {
+    if (!lastGeneratedFiles.audioUrl || !lastGeneratedFiles.csvUrl) {
+        return res.status(404).json({ 
+            error: 'No files generated yet' 
+        });
+    }
+    
+    res.json({
+        message: 'Last generated files URLs',
+        ...lastGeneratedFiles
+    });
+});
+
 // 提供静态文件服务
 app.use('/downloads', express.static(downloadsDir));
 
@@ -96,4 +128,5 @@ app.use('/downloads', express.static(downloadsDir));
 app.listen(port, () => {
     console.log(`Local proxy server running at http://localhost:${port}`);
     console.log(`Proxying requests to: http://${SERVER_IP}:${SERVER_PORT}`);
+    console.log(`Access last generated files at: http://localhost:${port}/last-generated`);
 });

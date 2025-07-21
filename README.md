@@ -6,13 +6,16 @@ usage:
 in remote llm server:
     python HRI_mllm/inference/text_response_server.py
 
-in 4 terminals:
+in 3 terminals:
 
     ssh -L 6000:localhost:5000 root@36.103.180.174
     node proxyServer.js
-    node server.js
 
     npm start
+
+then open:
+    http://127.0.0.1:9080/example/dev-bundle/test.html
+    http://127.0.0.1:9080/example/dev-bundle/index.html
 
 
 

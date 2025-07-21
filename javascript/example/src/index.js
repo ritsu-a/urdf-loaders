@@ -14,6 +14,7 @@ customElements.define('urdf-viewer', URDFManipulator);
 // TODO: Remove this once modules or parcel is being used
 const viewer = document.querySelector('urdf-viewer');
 
+
 const limitsToggle = document.getElementById('ignore-joint-limits');
 const collisionToggle = document.getElementById('collision-toggle');
 const radiansToggle = document.getElementById('radians-toggle');
@@ -35,9 +36,17 @@ let isPlaying = false;      // 播放状态
 let playInterval;           // 播放计时器
 let frameRate = 20;         // 默认帧率(帧/秒)
 
+// 创建显示区域
+const logContainer = document.createElement('div');
+document.body.appendChild(logContainer);
 
-let controlMode = 'manual'; // 'manual' 或 'animation'
-let animationRequestId = null;
+// 劫持 console.log
+const originLog = console.log;
+console.log = function(...args) {
+  originLog(...args);  // 保持原功能
+  logContainer.innerHTML += args.join(' ') + '<br>'; // 输出到页面
+};
+
 
 // Global Functions
 const setColor = color => {
@@ -393,6 +402,8 @@ document.addEventListener('WebComponentsReady', () => {
 
 
 
+
+
 // 音频控制功能
 document.addEventListener('DOMContentLoaded', () => {
     const playBtn = document.getElementById('play-btn');
@@ -406,11 +417,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 播放音频功能
     playBtn.addEventListener('click', async () => {
+
+        const response = await fetch('http://192.168.51.4:3001/last-generated', null);
+        
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || '文件生成失败');
+        }
+        
+        const result = await response.json();
+        
+        // 保存文件URL
+        audioUrl = result.audioUrl;
+        csvUrl = result.csvUrl;
+
+        console.log('音频文件URL:', audioUrl);
+        console.log('CSV文件URL:', csvUrl);
+
+
         // 播放 audio/output.wav 文件
-        const audio = new Audio('../../../data/output.wav');
+        const audio = new Audio(audioUrl);
         
         try {
-            const response = await fetch('http://127.0.0.1:9080/data/output.csv');
+            const response = await fetch(csvUrl);
         
             if (!response.ok) {
                 throw new Error(`文件加载失败: ${response.status} ${response.statusText}`);
@@ -617,7 +647,7 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('filename', 'input.wav'); // 指定保存的文件名
         
         // 使用服务器端点保存音频
-        fetch('http://localhost:3000/upload_audio', {
+        fetch('http://192.168.51.4:3000/upload_audio', {
             method: 'POST',
             body: formData
         })
